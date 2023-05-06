@@ -3,6 +3,8 @@ from .models import Post
 from django.http import Http404
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.views.generic import ListView
+from .forms import EmailPostForm
+from django.core.mail import send_mail
 
 
 # Create your views here.
@@ -15,6 +17,28 @@ def post_detail(request, year, month, day, post):
                              publish__day = day)
     return render(request, 'blog/post/detail.html', {'post':post})
 
+def post_share(request, post_id):
+    #пост извлекается по его id
+    post = get_object_or_404(Post, id = post_id, status = Post.Status.PUBLISHED)
+    
+    sent = False
+    
+    if request.method == 'POST':
+        #форма отправлена
+        form = EmailPostForm(request.POST)
+        #если поля формы успешно прошли валидацию
+        if form.is_valid():
+            cd = form.cleaned_data
+            post_url = request.build_absolute_uri(post.get_absolute_url())
+            subject = f'{cd["name"]} recommends you read {post.title}'
+            message = f'Read {post.title} at {post_url}\n\n {cd["name"]}\'s comments: {cd["comments"]}'
+            send_mail(subject, message, 'forstudy546@gmail.com', [cd['to']])
+            sent = True
+    
+    else:
+        form = EmailPostForm()
+    
+    return render(request, 'blog/post/share.html', {'post':post, 'form':form, 'sent':sent})
 # def post_list(request):
 #     post_list = Post.objects.all()
 #     #постраничная разбивка по 3 поста на страницу
