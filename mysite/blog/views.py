@@ -71,7 +71,7 @@ class PostListView(ListView):
 
 @require_POST
 def post_comment(request, post_id):
-    post = get_object_or_404(Post, id=post.id, status = Post.Status.PUBLISHED)
+    post = get_object_or_404(Post, id=post_id, status = Post.Status.PUBLISHED)
     comment = None
     #Комментарий был отправлен
     form = CommentForm(data=request.POST)
