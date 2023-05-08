@@ -1,10 +1,11 @@
 from django.shortcuts import render, get_object_or_404
-from .models import Post
+from .models import Post, Comment
 from django.http import Http404
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.views.generic import ListView
-from .forms import EmailPostForm
+from .forms import EmailPostForm, CommentForm
 from django.core.mail import send_mail
+from django.views.decorators.http import require_POST
 
 
 # Create your views here.
@@ -62,3 +63,21 @@ class PostListView(ListView):
     context_object_name = 'posts'
     paginate_by = 3
     template_name = 'blog/post/list.html'
+
+# -------------------
+# Comments
+
+@require_POST
+def post_comment(request, post_id):
+    post = get_object_or_404(Post, id=post.id, status = Post.Status.PUBLISHED)
+    comment = None
+    #Комментарий был отправлен
+    form = CommentForm(data=request.POST)
+    if form.is_valid():
+        #сохранить комментарий не загружая в базу
+        comment = form.save(commit=False)
+        #установить пост для комментария
+        comment.post = post
+        #сохранить в базу данных полную форму
+        comment.save()
+    return render(request, 'blog/post/comment.html', {'post':post, 'form':form, 'comment':comment})
